@@ -25,7 +25,11 @@ package org.xalgorithms.config
 import akka.actor.ActorSystem
 
 class Settings(actor_system: ActorSystem) {
-  val Kafka = Map[String, String]("bootstrap_servers" -> "localhost:9092", "topic" -> "akka-testing-topic", "groupId" -> "akka-testing")
+  val Kafka = Map[String, String](
+    "bootstrap_servers" -> sys.env.getOrElse("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092"),
+    "topic" -> sys.env.getOrElse("KAFKA_TOPIC", "akka-testing-topic"),
+    "groupId" -> sys.env.getOrElse("KAFKA_GROUP_ID", "akka-testing")
+  )
 }
 
 object Settings {
