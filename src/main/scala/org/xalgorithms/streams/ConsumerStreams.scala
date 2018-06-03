@@ -25,8 +25,8 @@ package org.xalgorithms.streams
 import akka.actor.{ ActorSystem, ActorRef }
 import akka.kafka.{ ConsumerMessage, ConsumerSettings, Subscriptions }
 import akka.kafka.scaladsl.Consumer
-import akka.stream.scaladsl.{ Sink }
-import org.apache.kafka.clients.consumer.{ ConsumerConfig }
+import akka.stream.scaladsl.{ Flow, Sink }
+import org.apache.kafka.clients.consumer.{ ConsumerConfig, ConsumerRecord }
 import org.apache.kafka.common.serialization.{ StringDeserializer }
 
 trait ConsumerStreams extends AkkaStreams {
@@ -37,11 +37,18 @@ trait ConsumerStreams extends AkkaStreams {
       .withBootstrapServers(props("bootstrap_servers"))
       .withGroupId(props("groupId"))
       .withProperty(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest")
+      .withProperty(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "true")
 
-    Consumer.committableSource(settings, Subscriptions.topics(props("topic")))
+    // TODO: research when committable source would be useful
+    // https://github.com/akka/reactive-kafka/blob/master/core/src/main/scala/akka/kafka/scaladsl/Consumer.scala
+    Consumer.plainSource(settings, Subscriptions.topics(props("topic")))
   }
 
   def make_sink(actor_ref: ActorRef) = {
     Sink.actorRefWithAck(actor_ref, "STREAM_INIT", "OK", "STREAM_DONE")
+  }
+
+  def make_flow() = {
+    Flow[ConsumerRecord[String, String]].map(_.value)
   }
 }

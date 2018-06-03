@@ -40,7 +40,9 @@ object Main extends App with ConsumerStreams {
   val settings = Settings(actor_system).Kafka
   val src = make_source(settings)
   val sink = make_sink(actor_action_stream)
-  val stream = src.to(sink).run()
+  val flow = make_flow()
+  val stream = src.via(flow).to(sink).run()
+//  val stream = src.to(sink).run()
 
   scala.sys.addShutdownHook({
     println("# shutdown")
