@@ -26,17 +26,17 @@ import akka.actor.{ ActorSystem, ActorRef }
 import akka.kafka.{ ConsumerMessage, ConsumerSettings, Subscriptions }
 import akka.kafka.scaladsl.Consumer
 import akka.stream.scaladsl.{ Sink }
+import org.apache.kafka.clients.consumer.{ ConsumerConfig }
 import org.apache.kafka.common.serialization.{ StringDeserializer }
 
 trait ConsumerStreams extends AkkaStreams {
   implicit val actor_system: ActorSystem
 
-  def self: ActorRef
-
   def make_source(props: Map[String, String]) = {
     val settings = ConsumerSettings(actor_system, new StringDeserializer, new StringDeserializer)
       .withBootstrapServers(props("bootstrap_servers"))
       .withGroupId(props("groupId"))
+      .withProperty(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest")
 
     Consumer.committableSource(settings, Subscriptions.topics(props("topic")))
   }

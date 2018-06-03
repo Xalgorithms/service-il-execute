@@ -23,6 +23,7 @@
 package org.xalgorithms.actors
 
 import akka.actor.{ Actor, ActorRef }
+import scala.collection.mutable.ArrayBuffer
 
 class ActionStream extends Actor {
   implicit val actor_system = context.system
@@ -32,9 +33,11 @@ class ActionStream extends Actor {
       println("> STREAM_INIT")
       sender() ! "OK"
     }
+
     case other => {
       println("> other")
       println(other)
+      sender() ! "OK"
     }
   }
 }
