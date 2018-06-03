@@ -25,6 +25,8 @@ package org.xalgorithms.actors
 import akka.actor.{ Actor, ActorRef }
 import scala.collection.mutable.ArrayBuffer
 
+import org.xalgorithms.actors.Actions._
+
 class ActionStream extends Actor {
   implicit val actor_system = context.system
 
@@ -32,6 +34,10 @@ class ActionStream extends Actor {
     case "STREAM_INIT" => {
       println("> STREAM_INIT")
       sender() ! "OK"
+    }
+
+    case ExecuteOne(document_id, rule_id) => {
+      println(s"> ${document_id} / ${rule_id}")
     }
 
     case other => {

@@ -25,3 +25,7 @@ package org.xalgorithms.actors
 object Triggers {
   case class ActivatedStream(topic: String)
 }
+
+object Actions {
+  case class ExecuteOne(document_id: String, rule_id: String)
+}

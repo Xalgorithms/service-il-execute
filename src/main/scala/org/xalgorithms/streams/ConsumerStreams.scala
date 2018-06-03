@@ -29,6 +29,8 @@ import akka.stream.scaladsl.{ Flow, Sink }
 import org.apache.kafka.clients.consumer.{ ConsumerConfig, ConsumerRecord }
 import org.apache.kafka.common.serialization.{ StringDeserializer }
 
+import org.xalgorithms.actors.Actions._
+
 trait ConsumerStreams extends AkkaStreams {
   implicit val actor_system: ActorSystem
 
@@ -49,6 +51,6 @@ trait ConsumerStreams extends AkkaStreams {
   }
 
   def make_flow() = {
-    Flow[ConsumerRecord[String, String]].map(_.value)
+    Flow[ConsumerRecord[String, String]].map(_.value.split(":")).map(a => ExecuteOne(a(0), a(1)))
   }
 }
