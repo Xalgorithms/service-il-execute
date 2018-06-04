@@ -22,16 +22,10 @@
 // <http://www.gnu.org/licenses/>.
 package org.xalgorithms.config
 
-import akka.actor.ActorSystem
-
-class Settings(actor_system: ActorSystem) {
-  val Kafka = Map[String, String](
-    "bootstrap_servers" -> sys.env.getOrElse("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092"),
-    "topic" -> sys.env.getOrElse("KAFKA_TOPIC", "akka-testing-topic"),
-    "groupId" -> sys.env.getOrElse("KAFKA_GROUP_ID", "akka-testing")
-  )
-}
-
 object Settings {
-  def apply(actor_system: ActorSystem) = new Settings(actor_system)
+  val Kafka = Map(
+    "bootstrap_servers" -> sys.env.getOrElse("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092"),
+    "topic" -> sys.env.getOrElse("KAFKA_TOPIC", "il.jobs.execute"),
+    "group_id" -> "il-group-execute"
+  )
 }

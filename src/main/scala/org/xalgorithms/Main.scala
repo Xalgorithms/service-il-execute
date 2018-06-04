@@ -26,23 +26,18 @@ import akka.actor.{ ActorSystem, Props }
 import scala.concurrent.{ Await }
 import scala.concurrent.duration._
 
-import org.xalgorithms.actors._
-import org.xalgorithms.config.{ Settings }
-import org.xalgorithms.streams.{ ConsumerStreams }
+import org.xalgorithms.actors.ActionStream
+import org.xalgorithms.streams.AkkaStreams
+import org.xalgorithms.actors.Triggers.InitializeConsumer
 
-object Main extends App with ConsumerStreams {
+object Main extends App with AkkaStreams {
   implicit val actor_system = ActorSystem("interlibr-service-execute")
 
   val actor_action_stream = actor_system.actorOf(Props(new ActionStream), "action_stream")
 
-  println(s"# setting up consumer (${actor_action_stream})")
+  actor_action_stream ! InitializeConsumer()
 
-  val settings = Settings(actor_system).Kafka
-  val src = make_source(settings)
-  val sink = make_sink(actor_action_stream)
-  val flow = make_flow()
-  val stream = src.via(flow).to(sink).run()
-//  val stream = src.to(sink).run()
+  println(s"# setting up consumer (${actor_action_stream})")
 
   scala.sys.addShutdownHook({
     println("# shutdown")

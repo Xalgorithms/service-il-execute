@@ -23,7 +23,7 @@
 package org.xalgorithms.actors
 
 object Triggers {
-  case class ActivatedStream(topic: String)
+  case class InitializeConsumer()
 }
 
 object Actions {
