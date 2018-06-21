@@ -26,6 +26,7 @@ lazy val VERSION_SCALA_TEST        = "3.1.2"
 lazy val VERSION_CASSANDRA         = "3.5.0"
 lazy val VERSION_AKKA_STREAM_KAFKA = "0.20"
 lazy val VERSION_SCALA_MOCK        = "4.1.0"
+lazy val VERSION_AVRO4S            = "1.9.0"
 
 lazy val meta = Seq(
   name := """services-execute""",
@@ -38,6 +39,7 @@ lazy val lib_deps = Seq(
   "org.mongodb.scala"      %% "mongo-scala-driver"      % VERSION_MONGO_SCALA,
   "com.typesafe.akka"      %% "akka-stream-kafka"       % VERSION_AKKA_STREAM_KAFKA,
   "com.datastax.cassandra" %  "cassandra-driver-core"   % VERSION_CASSANDRA,
+  "com.sksamuel.avro4s"    %% "avro4s-core"             % VERSION_AVRO4S,
   "org.scalamock"          %% "scalamock"               % VERSION_SCALA_MOCK % Test
 )
 

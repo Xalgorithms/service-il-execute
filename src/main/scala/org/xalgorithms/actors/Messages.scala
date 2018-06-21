@@ -24,6 +24,10 @@ package org.xalgorithms.actors
 
 object Triggers {
   case class InitializeConsumer()
+  case class FailureDecode()
+
+  abstract class Trigger
+  case class TriggerById(id: String) extends Trigger
 }
 
 object Actions {

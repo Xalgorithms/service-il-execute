@@ -20,11 +20,14 @@
 // You should have received a copy of the GNU Affero General Public
 // License along with this program. If not, see
 // <http://www.gnu.org/licenses/>.
-package org.xalgorithms.config
+package org.xalgorithms.services
 
-object Settings {
-  val Kafka = Map(
-    "bootstrap_servers" -> sys.env.getOrElse("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092"),
-    "group_id" -> "il-group-execute"
-  )
+abstract class Logger {
+  def debug(m: String)
+  def error(m: String)
+}
+
+class LocalLogger extends Logger {
+  def debug(m: String) = { println(s"# ${m}") }
+  def error(m: String) = { println(s"! ${m}") }
 }

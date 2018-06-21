@@ -22,19 +22,24 @@
 // <http://www.gnu.org/licenses/>.
 package org.xalgorithms.actors
 
-import akka.actor.{ Actor, ActorRef, ActorSystem }
+import akka.actor._
 import akka.kafka.{ ConsumerSettings, Subscriptions }
 import akka.kafka.scaladsl.Consumer
+import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.{ Flow, Sink }
+import com.sksamuel.avro4s.{ AvroInputStream }
+import java.io.ByteArrayInputStream
 import org.apache.kafka.clients.consumer.{ ConsumerConfig, ConsumerRecord }
 import org.apache.kafka.common.serialization.{ StringDeserializer }
+import scala.util.{ Failure, Success }
 
 import org.xalgorithms.actors.Actions._
 import org.xalgorithms.actors.Triggers._
 import org.xalgorithms.config.Settings
 import org.xalgorithms.streams.AkkaStreams
+import org.xalgorithms.services.Mongo
 
-class ActionStream extends Actor with AkkaStreams {
+abstract class TopicActor(topic: String) extends Actor with AkkaStreams with ActorLogging {
   implicit val actor_system = context.system
 
   val kafka_settings = Settings.Kafka
@@ -43,38 +48,50 @@ class ActionStream extends Actor with AkkaStreams {
     .withGroupId(kafka_settings("group_id"))
     .withProperty(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest")
     .withProperty(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "true")
-  val topic = kafka_settings("topic")
+  val mongo = new Mongo()
 
-  def source() = {
-    // TODO: research when committable source would be useful
-    // https://github.com/akka/reactive-kafka/blob/master/core/src/main/scala/akka/kafka/scaladsl/Consumer.scala
-    Consumer.plainSource(consumer_settings, Subscriptions.topics(topic))
+  // TODO: research when committable source would be useful
+  // https://github.com/akka/reactive-kafka/blob/master/core/src/main/scala/akka/kafka/scaladsl/Consumer.sca
+  private val _source = Consumer.plainSource(consumer_settings, Subscriptions.topics(topic))
+  private val _flow_avro = Flow[ConsumerRecord[String, String]].map { rec =>
+    val bis = new ByteArrayInputStream(rec.value.getBytes("UTF-8"))
+    AvroInputStream.json[TriggerById](bis).singleEntity match {
+      case Success(tr) => tr
+      case Failure(th) => {
+        log.error("! decode failed")
+        FailureDecode()
+      }
+    }
   }
 
-  def sink() = {
-    Sink.actorRefWithAck(self, "STREAM_INIT", "OK", "STREAM_DONE")
-  }
+  private val _sink = Sink.actorRefWithAck(self, "STREAM_INIT", "OK", "STREAM_DONE")
 
-  def flow() = {
-    Flow[ConsumerRecord[String, String]].map(_.value.split(":")).map(a => ExecuteOne(a(0), a(1)))
-  }
+  def trigger(tr: Trigger): Unit
 
   def receive: Receive = {
     case "STREAM_INIT" => {
-      println("> STREAM_INIT")
+      log.info("> STREAM_INIT")
       sender() ! "OK"
     }
 
     case InitializeConsumer() => {
-      source().via(flow()).to(sink).run()
+      log.info("> InitializeConsumer")
+      _source.via(_flow_avro).to(_sink).run()
+      sender() ! "OK"
     }
 
-    case ExecuteOne(document_id, rule_id) => {
-      println(s"> ${document_id} / ${rule_id}")
+    case FailureDecode() => {
+      log.error("! failed message decode")
+    }
+
+    case (tr: Trigger) => {
+      log.info("> received a trigger")
+      trigger(tr)
+      sender() ! "OK"
     }
 
     case other => {
-      println("> other")
+      log.error("> something unconsidered")
       println(other)
       sender() ! "OK"
     }

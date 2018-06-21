@@ -22,24 +22,42 @@
 // <http://www.gnu.org/licenses/>.
 package org.xalgorithms
 
-import akka.actor.{ ActorSystem, Props }
-import scala.concurrent.{ Await }
+import akka.actor._
+import akka.event.Logging
+import akka.pattern.gracefulStop
+import scala.concurrent._
 import scala.concurrent.duration._
 
-import org.xalgorithms.actors.ActionStream
+import org.xalgorithms.actors.TopicActor
 import org.xalgorithms.streams.AkkaStreams
-import org.xalgorithms.actors.Triggers.InitializeConsumer
 
 object Main extends App with AkkaStreams {
+  import org.xalgorithms.actors.Triggers._
+
+  class ActionsActor extends TopicActor("il.verify.rule_execution") {
+    def trigger(tr: Trigger): Unit = tr match {
+      case TriggerById(request_id) => {
+        _log.info(s"TriggerById(${request_id})")
+      }
+    }
+  }
+
   implicit val actor_system = ActorSystem("interlibr-service-execute")
+  private val _log = Logging(actor_system, this.getClass())
 
-  val actor_action_stream = actor_system.actorOf(Props(new ActionStream), "action_stream")
+  val actors = Map(
+    "verify_rule_execution" -> Props[ActionsActor]
+  ).map { case (name, props) => actor_system.actorOf(props, s"actors_${name}") }
 
-  actor_action_stream ! InitializeConsumer()
-
-  println(s"# setting up consumer (${actor_action_stream})")
+  println(s"# setting up consumers")
+  actors.foreach { ref => ref ! InitializeConsumer() }
 
   scala.sys.addShutdownHook({
+    println("# stopping actors")
+    actors.foreach { ref =>
+      Await.result(gracefulStop(ref, 2 seconds), 3.seconds)
+    }
+
     println("# shutdown")
     actor_system.terminate()
     Await.result(actor_system.whenTerminated, 10.seconds)
