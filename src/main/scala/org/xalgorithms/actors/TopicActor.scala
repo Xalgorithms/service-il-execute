@@ -37,7 +37,6 @@ import org.xalgorithms.actors.Actions._
 import org.xalgorithms.actors.Triggers._
 import org.xalgorithms.config.Settings
 import org.xalgorithms.streams.AkkaStreams
-import org.xalgorithms.services.Mongo
 
 abstract class TopicActor(topic: String) extends Actor with AkkaStreams with ActorLogging {
   implicit val actor_system = context.system
@@ -48,7 +47,6 @@ abstract class TopicActor(topic: String) extends Actor with AkkaStreams with Act
     .withGroupId(kafka_settings("group_id"))
     .withProperty(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest")
     .withProperty(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "true")
-  val mongo = new Mongo()
 
   // TODO: research when committable source would be useful
   // https://github.com/akka/reactive-kafka/blob/master/core/src/main/scala/akka/kafka/scaladsl/Consumer.sca
