@@ -20,11 +20,28 @@
 // You should have received a copy of the GNU Affero General Public
 // License along with this program. If not, see
 // <http://www.gnu.org/licenses/>.
-package org.xalgorithms.config
+package org.xalgorithms.actors
 
-object Settings {
-  val Kafka = Map(
-    "bootstrap_servers" -> sys.env.getOrElse("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092"),
-    "group_id" -> "il-group-execute"
-  )
+import scala.util.{ Success, Failure }
+
+import org.xalgorithms.actors.Triggers._
+import org.xalgorithms.services.{ AkkaLogger, Mongo, MongoActions }
+
+class ActionsActor extends TopicActor("il.verify.rule_execution") {
+  private val _mongo = new Mongo(new AkkaLogger("mongo", log))
+
+  def trigger(tr: Trigger): Unit = tr match {
+    case TriggerById(request_id) => {
+      log.info(s"TriggerById(${request_id})")
+      _mongo.find_one(MongoActions.FindTestRunById(request_id)).onComplete {
+        case Success(doc) => {
+          println(doc)
+        }
+
+        case Failure(th) => {
+          println("failed")
+        }
+      }
+    }
+  }
 }
