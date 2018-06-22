@@ -28,19 +28,11 @@ import akka.pattern.gracefulStop
 import scala.concurrent._
 import scala.concurrent.duration._
 
-import org.xalgorithms.actors.TopicActor
+import org.xalgorithms.actors.ActionsActor
 import org.xalgorithms.streams.AkkaStreams
 
 object Main extends App with AkkaStreams {
   import org.xalgorithms.actors.Triggers._
-
-  class ActionsActor extends TopicActor("il.verify.rule_execution") {
-    def trigger(tr: Trigger): Unit = tr match {
-      case TriggerById(request_id) => {
-        _log.info(s"TriggerById(${request_id})")
-      }
-    }
-  }
 
   implicit val actor_system = ActorSystem("interlibr-service-execute")
   private val _log = Logging(actor_system, this.getClass())
