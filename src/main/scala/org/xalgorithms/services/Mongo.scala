@@ -72,6 +72,10 @@ object MongoActions {
   object FindTestRunById {
     def apply(id: String) = FindByKey("test-runs", "request_id", id)
   }
+
+  object FindRuleById {
+    def apply(id: String) = FindByKey("rules", "public_id", id)
+  }
 }
 
 class Mongo(log: Logger = new LocalLogger) {
