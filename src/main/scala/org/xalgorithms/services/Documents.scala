@@ -76,6 +76,10 @@ object Documents {
     }
   }
 
+  def maybe_find_array(doc: BsonDocument, k: String): Option[BsonArray] = {
+    maybe_find_value(doc, k).map(convert_to_array(_))
+  }
+
   def maybe_find_date_time(doc: BsonDocument, k: String): Option[DateTime] = {
      maybe_find_value(doc, k) match {
       case Some(v) => Option(convert_to_date_time(v))
@@ -144,6 +148,11 @@ object Documents {
     // case BsonType.INT32  => v.asInt32().toString()
     case (nv: BsonString)  => nv.getValue()
     // case BsonType.TIMESTAMP  => match_value(v.asTimestamp())
+    case _ => null
+  }
+
+  def convert_to_array(v: BsonValue) = v match {
+    case (av: BsonArray) => av
     case _ => null
   }
 }

@@ -23,20 +23,77 @@
 package org.xalgorithms.actors
 
 import org.bson._
+import scala.concurrent._
+import scala.concurrent.duration._
 import scala.util.{ Success, Failure }
 
 import org.xalgorithms.actors.Triggers._
+import org.xalgorithms.rules._
+import org.xalgorithms.rules.elements._
 import org.xalgorithms.services.{ AkkaLogger, Documents, Mongo, MongoActions }
 
 class ActionsActor extends TopicActor("il.verify.rule_execution") {
   private val _mongo = new Mongo(new AkkaLogger("mongo", log))
 
+  class LoadFromMongoBsonTableSource extends LoadBsonTableSource {
+    private val _cache = scala.collection.mutable.Map[String, BsonArray]()
+
+    private def lookup_table(ptref: PackagedTableReference): BsonArray = {
+      val table_props = s"package_name=${ptref.package_name}; id=${ptref.id}; ver=${ptref.version}"
+      log.info(s"asked to find table (${table_props})")
+      val q = _mongo.find_one(
+        MongoActions.FindTableByReference(ptref.package_name, ptref.id, ptref.version))
+      try {
+        val res = Await.result(q, 5.seconds)
+        Documents.maybe_find_array(res, "table").getOrElse(new BsonArray())
+      } catch {
+        case (th: java.util.concurrent.TimeoutException) => {
+          log.error(s"connection timed out looking for table, yielding empty (${table_props})")
+          new BsonArray()
+        }
+      }
+    }
+
+    private def maybe_find_in_cache(ptref: PackagedTableReference): BsonArray = {
+      val k = s"${ptref.package_name}/${ptref.id}/${ptref.version}"
+      _cache.get(k) match {
+        case Some(a) => {
+          log.info("reading table from cache")
+          a
+        }
+        case None => {
+          log.info("serving table from cache")
+          val a = lookup_table(ptref)
+          _cache.put(k, a)
+          a
+        }
+      }
+    }
+
+    def read(ptref: PackagedTableReference): BsonArray = {
+      maybe_find_in_cache(ptref)
+    }
+  }
+
+  def build_context(opt_ctx_doc: Option[BsonDocument]): Context = {
+    val ctx = new GlobalContext(new LoadFromMongoBsonTableSource())
+    // TODO: add opt_ctx_doc
+    ctx
+  }
+
   def execute_one(rule_id: String, opt_ctx_doc: Option[BsonDocument]): Unit = {
     log.info(s"executing rule (rule_id=${rule_id})")
     _mongo.find_one(MongoActions.FindRuleById(rule_id)).onComplete {
       case Success(rule_doc) => {
-        println(rule_doc)
-        println(opt_ctx_doc)
+        log.debug("building syntax")
+        val steps = SyntaxFromBson(rule_doc)
+        log.debug("building ctx")
+        val ctx = build_context(opt_ctx_doc)
+        log.info("executing steps")
+        steps.foreach { step =>
+          step.execute(ctx)
+        }
+        log.info("executed all steps")
       }
 
       case Failure(th) => {
