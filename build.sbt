@@ -43,7 +43,8 @@ lazy val meta = Seq(
 
 lazy val lib_deps = Seq(
   // ours
-  "org.xalgorithms"        %% "il-rules-interpreter"    % VERSION_RULES_INTERPRETER,
+  // FIXME: publish these to maven or github or something
+  "org.xalgorithms"        %% "il-rules-interpreter"    % VERSION_RULES_INTERPRETER from "file://jars/il-rules-interpreter_2.11-0.0.1.jar",
   // outer
   "org.mongodb.scala"      %% "mongo-scala-driver"      % VERSION_MONGO_SCALA,
   "com.typesafe.akka"      %% "akka-stream-kafka"       % VERSION_AKKA_STREAM_KAFKA,
