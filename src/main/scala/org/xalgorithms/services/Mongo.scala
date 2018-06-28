@@ -22,6 +22,7 @@
 // <http://www.gnu.org/licenses/>.
 package org.xalgorithms.services
 
+import java.security.MessageDigest
 import java.util.UUID.randomUUID
 import org.mongodb.scala.bson.{ BsonDocument }
 import org.mongodb.scala._
@@ -31,6 +32,7 @@ import org.mongodb.scala.model.Projections._
 import org.mongodb.scala.model.Sorts._
 import org.mongodb.scala.model.Updates._
 import org.mongodb.scala.model._
+import play.api.libs.Codecs
 import scala.concurrent.{ Future, Promise }
 
 // should use an actor's execution context
@@ -71,6 +73,19 @@ object MongoActions {
 
   object FindTestRunById {
     def apply(id: String) = FindByKey("test-runs", "request_id", id)
+  }
+
+  object FindRuleById {
+    def apply(id: String) = FindByKey("rules", "public_id", id)
+  }
+
+  object FindTableByReference {
+    def apply(pkg: String, name: String, ver: String) = {
+      val s = s"T(${pkg}:${name}:${ver})"
+      val k = play.api.libs.Codecs.sha1(s.getBytes)
+
+      FindByKey("tables", "public_id", k)
+    }
   }
 }
 
