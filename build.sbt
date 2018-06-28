@@ -37,14 +37,14 @@ lazy val VERSION_RULES_INTERPRETER = "0.0.1"
 lazy val meta = Seq(
   name := """services-execute""",
   organization := "org.xalgorithms",
-  version := "0.0.1-SNAPSHOT",
+  version := "0.0.1",
   scalaVersion := VERSION_SCALA,
 )
 
 lazy val lib_deps = Seq(
   // ours
-  // FIXME: publish these to maven or github or something
-  "org.xalgorithms"        %% "il-rules-interpreter"    % VERSION_RULES_INTERPRETER from "file://jars/il-rules-interpreter_2.11-0.0.1.jar",
+  // FIXME: publish these to maven or github or something - it's currently copied into lib/
+//  "org.xalgorithms"        %% "il-rules-interpreter"    % VERSION_RULES_INTERPRETER,
   // outer
   "org.mongodb.scala"      %% "mongo-scala-driver"      % VERSION_MONGO_SCALA,
   "com.typesafe.akka"      %% "akka-stream-kafka"       % VERSION_AKKA_STREAM_KAFKA,
