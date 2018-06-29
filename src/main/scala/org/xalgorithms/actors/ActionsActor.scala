@@ -45,10 +45,12 @@ class ActionsActor extends TopicActor("il.verify.rule_execution") {
         log.debug("building ctx")
         val ctx = ExecutionContext(new AkkaLogger("exec ctx", log), _mongo, opt_ctx_doc)
         log.info("executing steps")
+        context.system.eventStream.publish(Events.ExecutionStarted(request_id))
         steps.foreach { step =>
           step.execute(ctx)
         }
         log.info("executed all steps")
+        context.system.eventStream.publish(Events.ExecutionFinished(request_id))
       }
 
       case Failure(th) => {

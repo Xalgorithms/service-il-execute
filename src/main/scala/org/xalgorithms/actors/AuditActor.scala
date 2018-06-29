@@ -22,16 +22,19 @@
 // <http://www.gnu.org/licenses/>.
 package org.xalgorithms.actors
 
-object Triggers {
-  case class InitializeConsumer()
-  case class FailureDecode()
+import akka.actor._
+import akka.stream.{ ActorMaterializer }
 
-  abstract class Trigger
-  case class TriggerById(id: String) extends Trigger
-}
+class AuditActor extends Actor with ActorLogging {
+  implicit val materializer = ActorMaterializer()
 
-object Events {
-  abstract class Event
-  case class ExecutionStarted(id: String) extends Event
-  case class ExecutionFinished(id: String) extends Event
+  def receive = {
+    case Events.ExecutionStarted(id) => {
+      log.info(s"started executing (id=${id})")
+    }
+
+    case Events.ExecutionFinished(id) => {
+      log.info(s"finished executing (id=${id})")
+    }
+  }
 }
