@@ -33,7 +33,6 @@ import org.apache.kafka.clients.consumer.{ ConsumerConfig, ConsumerRecord }
 import org.apache.kafka.common.serialization.{ StringDeserializer }
 import scala.util.{ Failure, Success }
 
-import org.xalgorithms.actors.Actions._
 import org.xalgorithms.actors.Triggers._
 import org.xalgorithms.config.Settings
 import org.xalgorithms.streams.AkkaStreams
