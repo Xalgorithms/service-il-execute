@@ -23,6 +23,7 @@
 package org.xalgorithms.actors
 
 import org.bson._
+import scala.collection.JavaConverters._
 import scala.concurrent._
 import scala.concurrent.duration._
 import scala.util.{ Success, Failure }
@@ -75,9 +76,52 @@ class ActionsActor extends TopicActor("il.verify.rule_execution") {
     }
   }
 
+  def internalize_document(doc: BsonDocument): Map[String, IntrinsicValue] = {
+    doc.keySet.asScala.foldLeft(Map[String, IntrinsicValue]()) { (m, k) =>
+      doc.get(k) match {
+        case (s: BsonString) =>   m ++ Map(k -> new StringValue(s.getValue))
+        case (n: BsonNumber) =>   m ++ Map(k -> new NumberValue(n.doubleValue))
+        case (o: BsonDocument) => m ++ internalize_document(o).map { case (ck, v) => s"${k}.${ck}" -> v }
+        case _ => m
+      }
+    }
+  }
+
+  def internalize_array(a: BsonArray): Seq[Map[String, IntrinsicValue]] = {
+    a.getValues.asScala.foldLeft(Seq[Map[String, IntrinsicValue]]()) { (seq, v) =>
+      v match {
+        case (o: BsonDocument) => seq :+ internalize_document(o)
+        case _ => seq
+      }
+    }
+  }
+
   def build_context(opt_ctx_doc: Option[BsonDocument]): Context = {
     val ctx = new GlobalContext(new LoadFromMongoBsonTableSource())
-    // TODO: add opt_ctx_doc
+    log.info("building context")
+    println(opt_ctx_doc)
+    opt_ctx_doc match {
+      case Some(doc) => {
+        doc.keySet.asScala.foreach { k =>
+          doc.get(k) match {
+            case (o: BsonDocument) => {
+              log.info(s"adding map (k=${k})")
+              ctx.retain_map(k, internalize_document(o))
+            }
+            case (a: BsonArray) => {
+              log.info(s"adding table (k=${k})")
+              ctx.retain_table("table", k, internalize_array(a))
+            }
+            case _ => {
+              log.debug(s"value is neither Array nor Document (k=${k})")
+            }
+          }
+        }
+      }
+      case None => {
+        log.info("no context was specified")
+      }
+    }
     ctx
   }
 
