@@ -23,18 +23,51 @@
 package org.xalgorithms.actors
 
 import akka.actor._
-import akka.stream.{ ActorMaterializer }
+import play.api.libs.json._
+import java.io.{ OutputStream }
 
-class AuditActor extends Actor with ActorLogging {
-  implicit val materializer = ActorMaterializer()
+abstract class Audit
+case class AuditExecutionStart(request_id: String) extends Audit
+case class AuditExecutionEnd(request_id: String) extends Audit
+
+class AuditSerializer extends Serializer[Audit] {
+  implicit val aes_writes = new Writes[AuditExecutionStart] {
+    def writes(aes: AuditExecutionStart) = Json.obj(
+      "context" -> Map("task" -> "execution", "action" -> "start"),
+      "args" -> Map("request_id" -> aes.request_id)
+    )
+  }
+
+  implicit val aee_writes = new Writes[AuditExecutionEnd] {
+    def writes(aee: AuditExecutionEnd) = Json.obj(
+      "context" -> Map("task" -> "execution", "action" -> "end"),
+      "args" -> Map("request_id" -> aee.request_id)
+    )
+  }
+
+  def write(o: Audit): String = {
+    (o match {
+      case (aes: AuditExecutionStart) => Json.toJson(aes)
+      case (aee: AuditExecutionEnd) => Json.toJson(aee)
+      case _ => ""
+    }).toString
+  }
+}
+
+class AuditActor extends Actor with ActorLogging with QueueForKafka[Audit] {
+  implicit val actor_system = context.system
+  implicit val topic = "il.emit.audit"
+  implicit val serializer = new AuditSerializer()
 
   def receive = {
     case Events.ExecutionStarted(id) => {
       log.info(s"started executing (id=${id})")
+      send(AuditExecutionStart(id))
     }
 
     case Events.ExecutionFinished(id) => {
       log.info(s"finished executing (id=${id})")
+      send(AuditExecutionEnd(id))
     }
   }
 }
