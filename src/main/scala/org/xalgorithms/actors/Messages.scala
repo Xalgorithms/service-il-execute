@@ -22,6 +22,8 @@
 // <http://www.gnu.org/licenses/>.
 package org.xalgorithms.actors
 
+import play.api.libs.json.JsValue
+
 object Triggers {
   case class InitializeConsumer()
   case class FailureDecode()
@@ -34,4 +36,6 @@ object Events {
   abstract class Event
   case class ExecutionStarted(id: String) extends Event
   case class ExecutionFinished(id: String) extends Event
+  case class StepStarted(id: String, number: Int, context: JsValue) extends Event
+  case class StepFinished(id: String, number: Int, context: JsValue) extends Event
 }

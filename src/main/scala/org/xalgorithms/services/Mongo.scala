@@ -24,7 +24,9 @@ package org.xalgorithms.services
 
 import java.security.MessageDigest
 import java.util.UUID.randomUUID
-import org.mongodb.scala.bson.{ BsonDocument }
+import com.mongodb.client.result.UpdateResult
+import org.mongodb.scala.bson.{ BsonDocument, BsonArray }
+import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala._
 import org.mongodb.scala.model.Aggregates._
 import org.mongodb.scala.model.Filters._
@@ -33,6 +35,7 @@ import org.mongodb.scala.model.Sorts._
 import org.mongodb.scala.model.Updates._
 import org.mongodb.scala.model._
 import play.api.libs.Codecs
+import play.api.libs.json.JsValue
 import scala.concurrent.{ Future, Promise }
 
 // should use an actor's execution context
@@ -62,6 +65,30 @@ object MongoActions {
     }
 
     def id = request_id
+  }
+
+  case class StoreTrace(request_id: String) extends Store {
+    private val public_id = randomUUID.toString()
+
+    def document: Document = Document(
+      "public_id"  -> public_id,
+      "request_id" -> request_id,
+      "steps" -> BsonArray()
+    )
+
+    def id = public_id
+  }
+
+  abstract class Update {
+    def collection: String
+    def condition: Unit
+    def update: Bson
+  }
+
+  case class AddContext(public_id: String, phase: String, index: Int, ctx: JsValue) extends Update {
+    def collection = "traces"
+    def condition = equal("public_id", public_id)
+    def update = push("steps", Document(ctx.toString))
   }
 
   class FindOne()
@@ -113,6 +140,7 @@ class Mongo(log: Logger = new LocalLogger) {
     val cn = op match {
       case MongoActions.StoreDocument(_) => "documents"
       case MongoActions.StoreTestRun(_, _)  => "test-runs"
+      case MongoActions.StoreTrace(_)  => "traces"
     }
 
     db.getCollection(cn).insertOne(op.document).subscribe(new Observer[Completed] {
@@ -130,6 +158,27 @@ class Mongo(log: Logger = new LocalLogger) {
         pr.failure(th)
       }
     })
+
+    pr.future
+  }
+
+  def update(op: MongoActions.Update): Future[Unit] = {
+    val pr = Promise[Unit]()
+    op match {
+      case MongoActions.AddContext(request_id, phase, index, ctx) => {
+        val doc = Document(
+          "index" -> index,
+          "phase" -> phase,
+          "context" -> Document(ctx.toString))
+        db.getCollection("traces").updateOne(
+          equal("request_id", request_id),
+          push("steps", doc)
+        ).subscribe((update: UpdateResult) => {
+          log.info(s"updated (request_id=${request_id}; matched=${update.getMatchedCount}; modified=${update.getModifiedCount})")
+          pr.success(None)
+        })
+      }
+    }
 
     pr.future
   }

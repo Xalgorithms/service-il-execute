@@ -46,8 +46,12 @@ class ActionsActor extends TopicActor("il.verify.rule_execution") {
         val ctx = ExecutionContext(new AkkaLogger("exec ctx", log), _mongo, opt_ctx_doc)
         log.info("executing steps")
         context.system.eventStream.publish(Events.ExecutionStarted(request_id))
-        steps.foreach { step =>
+        steps.zipWithIndex.foreach { case (step, i) =>
+          log.info(s"starting step (i=${i})")
+          context.system.eventStream.publish(Events.StepStarted(request_id, i, ctx.serialize))
           step.execute(ctx)
+          context.system.eventStream.publish(Events.StepFinished(request_id, i, ctx.serialize))
+          log.info(s"finished step (i=${i})")
         }
         log.info("executed all steps")
         context.system.eventStream.publish(Events.ExecutionFinished(request_id))
