@@ -38,7 +38,7 @@ import play.api.libs.Codecs
 import play.api.libs.json.JsValue
 import scala.concurrent.{ Future, Promise }
 
-// should use an actor's execution context
+// FIXME: should use an actor's execution context
 import scala.concurrent.ExecutionContext.Implicits.global
 
 object MongoActions {
@@ -98,8 +98,8 @@ object MongoActions {
     def apply(id: String) = FindByKey("documents", "public_id", id)
   }
 
-  object FindTestRunById {
-    def apply(id: String) = FindByKey("test-runs", "request_id", id)
+  object FindExecutionById {
+    def apply(id: String) = FindByKey("executions", "request_id", id)
   }
 
   object FindRuleById {

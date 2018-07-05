@@ -66,10 +66,12 @@ class ActionsActor extends TopicActor("il.verify.rule_execution") {
   def trigger(tr: Trigger): Unit = tr match {
     case TriggerById(request_id) => {
       log.info(s"TriggerById(${request_id})")
-      _mongo.find_one(MongoActions.FindTestRunById(request_id)).onComplete {
+      _mongo.find_one(MongoActions.FindExecutionById(request_id)).onComplete {
         case Success(doc) => {
+          log.info("found related document")
           Documents.maybe_find_text(doc, "rule_id") match {
             case Some(rule_id) => {
+              log.info(s"executing rule (${rule_id})")
               execute_one(request_id, rule_id, Documents.maybe_find_document(doc, "context"))
             }
             case None => log.error("failed to find rule_id")
