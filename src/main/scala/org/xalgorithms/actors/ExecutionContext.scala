@@ -27,9 +27,13 @@ import scala.collection.JavaConverters._
 import scala.concurrent._
 import scala.concurrent.duration._
 
+// ours
+import org.xalgorithms.storage.bson.Find
+
+// local
 import org.xalgorithms.rules._
 import org.xalgorithms.rules.elements._
-import org.xalgorithms.services.{ Documents, Mongo, MongoActions, Logger }
+import org.xalgorithms.services.{ Mongo, MongoActions, Logger }
 
 object ExecutionContext {
   def apply(log: Logger, mongo: Mongo, opt_ctx_doc: Option[BsonDocument]): Context = {
@@ -43,7 +47,7 @@ object ExecutionContext {
           MongoActions.FindTableByReference(ptref.package_name, ptref.id, ptref.version))
         try {
           val res = Await.result(q, 5.seconds)
-          Documents.maybe_find_array(res, "table").getOrElse(new BsonArray())
+          Find.maybe_find_array(res, "table").getOrElse(new BsonArray())
         } catch {
           case (th: java.util.concurrent.TimeoutException) => {
             log.error(s"connection timed out looking for table, yielding empty (${table_props})")

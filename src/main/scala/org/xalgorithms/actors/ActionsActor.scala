@@ -28,10 +28,14 @@ import scala.concurrent._
 import scala.concurrent.duration._
 import scala.util.{ Success, Failure }
 
+// ours
+import org.xalgorithms.storage.bson.Find
+
+// local
 import org.xalgorithms.actors.Triggers._
 import org.xalgorithms.rules._
 import org.xalgorithms.rules.elements._
-import org.xalgorithms.services.{ AkkaLogger, Documents, Mongo, MongoActions }
+import org.xalgorithms.services.{ AkkaLogger, Mongo, MongoActions }
 
 class ActionsActor extends TopicActor("il.verify.rule_execution") {
   private val _mongo = new Mongo(new AkkaLogger("mongo", log))
@@ -69,10 +73,10 @@ class ActionsActor extends TopicActor("il.verify.rule_execution") {
       _mongo.find_one(MongoActions.FindExecutionById(request_id)).onComplete {
         case Success(doc) => {
           log.info("found related document")
-          Documents.maybe_find_text(doc, "rule_id") match {
+          Find.maybe_find_text(doc, "rule_id") match {
             case Some(rule_id) => {
               log.info(s"executing rule (${rule_id})")
-              execute_one(request_id, rule_id, Documents.maybe_find_document(doc, "context"))
+              execute_one(request_id, rule_id, Find.maybe_find_document(doc, "context"))
             }
             case None => log.error("failed to find rule_id")
           }
