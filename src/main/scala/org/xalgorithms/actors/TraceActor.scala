@@ -24,8 +24,13 @@ package org.xalgorithms.actors
 
 import akka.actor._
 import akka.stream.{ ActorMaterializer }
-import org.xalgorithms.services.{ AkkaLogger, Mongo, MongoActions }
 import scala.util.{ Success, Failure }
+
+// ours
+import org.xalgorithms.storage.data.{ Mongo, MongoActions }
+
+// local
+import org.xalgorithms.services.{ AkkaLogger }
 
 class TraceActor extends Actor with ActorLogging {
   implicit val materializer = ActorMaterializer()

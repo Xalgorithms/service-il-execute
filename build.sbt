@@ -21,7 +21,7 @@
 // License along with this program. If not, see
 // <http://www.gnu.org/licenses/>.
 lazy val VERSION_MONGO_SCALA       = "2.3.0"
-lazy val VERSION_SCALA             = "2.11.11"
+lazy val VERSION_SCALA             = "2.12.4"
 lazy val VERSION_SCALA_TEST        = "3.1.2"
 lazy val VERSION_CASSANDRA         = "3.5.0"
 lazy val VERSION_AKKA_STREAM_KAFKA = "0.20"
@@ -33,8 +33,8 @@ lazy val VERSION_JODA_CONVERT      = "2.1"
 lazy val VERSION_PLAY              = "2.6.0"
 
 // ours
-lazy val VERSION_STORAGE           = "0.0.1"
-lazy val VERSION_RULES_INTERPRETER = "0.0.3"
+lazy val VERSION_STORAGE           = "0.0.2"
+lazy val VERSION_RULES_INTERPRETER = "0.0.4"
 
 lazy val meta = Seq(
   name := """services-execute""",
@@ -45,8 +45,8 @@ lazy val meta = Seq(
 
 lazy val lib_deps = Seq(
   // ours
-  "org.xalgorithms"        %% "il-storage"              % VERSION_STORAGE from s"https://github.com/Xalgorithms/lib-storage/releases/download/v${VERSION_STORAGE}/il-storage_2.11-${VERSION_STORAGE}.jar",
-  "org.xalgorithms"        %% "il-rules-interpreter"    % VERSION_RULES_INTERPRETER from s"https://github.com/Xalgorithms/lib-rules-int-scala/releases/download/v${VERSION_RULES_INTERPRETER}/il-rules-interpreter_2.11-${VERSION_RULES_INTERPRETER}.jar",
+  "org.xalgorithms"        %% "il-storage"              % VERSION_STORAGE from s"https://github.com/Xalgorithms/lib-storage/releases/download/v${VERSION_STORAGE}/il-storage_2.12-${VERSION_STORAGE}.jar",
+  "org.xalgorithms"        %% "il-rules-interpreter"    % VERSION_RULES_INTERPRETER from s"https://github.com/Xalgorithms/lib-rules-int-scala/releases/download/v${VERSION_RULES_INTERPRETER}/il-rules-interpreter_2.12-${VERSION_RULES_INTERPRETER}.jar",
   // outer
   "org.mongodb.scala"      %% "mongo-scala-driver"      % VERSION_MONGO_SCALA,
   "com.typesafe.akka"      %% "akka-stream-kafka"       % VERSION_AKKA_STREAM_KAFKA,

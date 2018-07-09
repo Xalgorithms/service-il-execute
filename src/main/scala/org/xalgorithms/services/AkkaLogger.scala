@@ -24,17 +24,8 @@ package org.xalgorithms.services
 
 import akka.event.LoggingAdapter
 
-abstract class Logger {
-  def debug(m: String)
-  def error(m: String)
-  def info(m: String)
-}
-
-class LocalLogger extends Logger {
-  def debug(m: String) = { println(s"# ${m}") }
-  def error(m: String) = { println(s"! ${m}") }
-  def info(m: String) = { println(s". ${m}") }
-}
+// ours
+import org.xalgorithms.storage.data.Logger
 
 class AkkaLogger(tag: String, akka_log: LoggingAdapter) extends Logger {
   def debug(m: String) = { akka_log.debug(s"(${tag}) ${m}") }

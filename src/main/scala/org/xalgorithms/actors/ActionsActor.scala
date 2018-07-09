@@ -29,20 +29,21 @@ import scala.concurrent.duration._
 import scala.util.{ Success, Failure }
 
 // ours
+import org.xalgorithms.rules._
+import org.xalgorithms.rules.elements._
 import org.xalgorithms.storage.bson.Find
+import org.xalgorithms.storage.data.{ Mongo, MongoActions }
 
 // local
 import org.xalgorithms.actors.Triggers._
-import org.xalgorithms.rules._
-import org.xalgorithms.rules.elements._
-import org.xalgorithms.services.{ AkkaLogger, Mongo, MongoActions }
+import org.xalgorithms.services.{ AkkaLogger }
 
 class ActionsActor extends TopicActor("il.verify.rule_execution") {
   private val _mongo = new Mongo(new AkkaLogger("mongo", log))
 
   def execute_one(request_id: String, rule_id: String, opt_ctx_doc: Option[BsonDocument]): Unit = {
     log.info(s"executing rule (rule_id=${rule_id})")
-    _mongo.find_one(MongoActions.FindRuleById(rule_id)).onComplete {
+    _mongo.find_one_bson(MongoActions.FindRuleById(rule_id)).onComplete {
       case Success(rule_doc) => {
         log.debug("building syntax")
         val steps = SyntaxFromBson(rule_doc)
@@ -70,7 +71,7 @@ class ActionsActor extends TopicActor("il.verify.rule_execution") {
   def trigger(tr: Trigger): Unit = tr match {
     case TriggerById(request_id) => {
       log.info(s"TriggerById(${request_id})")
-      _mongo.find_one(MongoActions.FindExecutionById(request_id)).onComplete {
+      _mongo.find_one_bson(MongoActions.FindExecutionById(request_id)).onComplete {
         case Success(doc) => {
           log.info("found related document")
           Find.maybe_find_text(doc, "rule_id") match {
