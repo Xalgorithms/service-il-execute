@@ -34,7 +34,6 @@ import play.api.libs.json._
 import scala.util.{ Failure, Success, Properties }
 
 import org.xalgorithms.actors.Triggers._
-import org.xalgorithms.config.Settings
 import org.xalgorithms.streams.AkkaStreams
 
 abstract class TopicActor(topic: String) extends Actor with AkkaStreams with ActorLogging {
