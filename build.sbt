@@ -39,7 +39,7 @@ lazy val VERSION_RULES_INTERPRETER = "0.0.4"
 lazy val meta = Seq(
   name := """services-execute""",
   organization := "org.xalgorithms",
-  version := "0.0.1",
+  version := "0.0.2",
   scalaVersion := VERSION_SCALA,
 )
 
@@ -61,3 +61,9 @@ lazy val lib_deps = Seq(
 lazy val root = (project in file("."))
   .settings(meta)
   .settings(libraryDependencies ++= lib_deps)
+  .enablePlugins(JavaAppPackaging)
+  .enablePlugins(DockerPlugin)
+  .enablePlugins(AshScriptPlugin)
+
+dockerBaseImage := "openjdk:jre-alpine"
+dockerUsername := Some("xalgorithms")
