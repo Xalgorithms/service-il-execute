@@ -31,7 +31,7 @@ import java.io.ByteArrayInputStream
 import org.apache.kafka.clients.consumer.{ ConsumerConfig, ConsumerRecord }
 import org.apache.kafka.common.serialization.{ StringDeserializer }
 import play.api.libs.json._
-import scala.util.{ Failure, Success }
+import scala.util.{ Failure, Success, Properties }
 
 import org.xalgorithms.actors.Triggers._
 import org.xalgorithms.config.Settings
@@ -40,10 +40,9 @@ import org.xalgorithms.streams.AkkaStreams
 abstract class TopicActor(topic: String) extends Actor with AkkaStreams with ActorLogging {
   implicit val actor_system = context.system
 
-  val kafka_settings = Settings.Kafka
   val consumer_settings = ConsumerSettings(actor_system, new StringDeserializer, new StringDeserializer)
-    .withBootstrapServers(kafka_settings("bootstrap_servers"))
-    .withGroupId(kafka_settings("group_id"))
+    .withBootstrapServers(Properties.envOrElse("KAFKA_BROKER", "kafka:9092"))
+    .withGroupId(Properties.envOrElse("KAFKA_GROUP_ID", "il-group-execute"))
     .withProperty(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest")
     .withProperty(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "true")
 

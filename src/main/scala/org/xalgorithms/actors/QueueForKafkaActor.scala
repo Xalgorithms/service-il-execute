@@ -53,7 +53,7 @@ trait QueueForKafka[T] extends AkkaStreams {
     if (_q == null) {
       val settings = ProducerSettings(
         actor_system, new StringSerializer, new StringSerializer
-      ).withBootstrapServers(Properties.envOrElse("KAFKA_BROKER", "localhost:9092"))
+      ).withBootstrapServers(Properties.envOrElse("KAFKA_BROKER", "kafka:9092"))
       _q = _source.via(_flow_serialize).via(_flow_record).to(Producer.plainSink(settings)).run()
     }
 
