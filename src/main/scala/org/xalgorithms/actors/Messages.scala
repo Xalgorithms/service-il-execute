@@ -22,7 +22,7 @@
 // <http://www.gnu.org/licenses/>.
 package org.xalgorithms.actors
 
-import play.api.libs.json.JsValue
+import play.api.libs.json._
 
 object Triggers {
   case class InitializeConsumer()
@@ -38,4 +38,22 @@ object Events {
   case class ExecutionFinished(id: String) extends Event
   case class StepStarted(id: String, number: Int, context: JsValue) extends Event
   case class StepFinished(id: String, number: Int, context: JsValue) extends Event
+}
+
+object Implicits {
+  import Triggers._
+
+  implicit val trigger_reads = new Reads[Trigger] {
+    def reads(json: JsValue): JsResult[Trigger] = {
+      val opt_tr = (json \ "context" \ "action").as[String] match {
+        case "trigger_by_id" => (json \ "args" \ "id").asOpt[String].map { id => new TriggerById(id) }
+        case _ => None
+      }
+
+      opt_tr match {
+        case Some(tr) => JsSuccess(tr)
+        case None     => JsError()
+      }
+    }
+  }
 }

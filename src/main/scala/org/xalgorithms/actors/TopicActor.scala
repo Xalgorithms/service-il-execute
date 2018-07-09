@@ -27,10 +27,10 @@ import akka.kafka.{ ConsumerSettings, Subscriptions }
 import akka.kafka.scaladsl.Consumer
 import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.{ Flow, Sink }
-import com.sksamuel.avro4s.{ AvroInputStream }
 import java.io.ByteArrayInputStream
 import org.apache.kafka.clients.consumer.{ ConsumerConfig, ConsumerRecord }
 import org.apache.kafka.common.serialization.{ StringDeserializer }
+import play.api.libs.json._
 import scala.util.{ Failure, Success }
 
 import org.xalgorithms.actors.Triggers._
@@ -50,14 +50,11 @@ abstract class TopicActor(topic: String) extends Actor with AkkaStreams with Act
   // TODO: research when committable source would be useful
   // https://github.com/akka/reactive-kafka/blob/master/core/src/main/scala/akka/kafka/scaladsl/Consumer.sca
   private val _source = Consumer.plainSource(consumer_settings, Subscriptions.topics(topic))
-  private val _flow_avro = Flow[ConsumerRecord[String, String]].map { rec =>
-    val bis = new ByteArrayInputStream(rec.value.getBytes("UTF-8"))
-    AvroInputStream.json[TriggerById](bis).singleEntity match {
-      case Success(tr) => tr
-      case Failure(th) => {
-        log.error("! decode failed")
-        FailureDecode()
-      }
+  private val _flow_json = Flow[ConsumerRecord[String, String]].map { rec =>
+    import Implicits.trigger_reads
+    Json.parse(rec.value).validate[Trigger] match {
+      case (s: JsSuccess[Trigger]) => s.get
+      case (e: JsError) => FailureDecode()
     }
   }
 
@@ -73,7 +70,7 @@ abstract class TopicActor(topic: String) extends Actor with AkkaStreams with Act
 
     case InitializeConsumer() => {
       log.info("> InitializeConsumer")
-      _source.via(_flow_avro).to(_sink).run()
+      _source.via(_flow_json).to(_sink).run()
       sender() ! "OK"
     }
 

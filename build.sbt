@@ -26,7 +26,6 @@ lazy val VERSION_SCALA_TEST        = "3.1.2"
 lazy val VERSION_CASSANDRA         = "3.5.0"
 lazy val VERSION_AKKA_STREAM_KAFKA = "0.20"
 lazy val VERSION_SCALA_MOCK        = "4.1.0"
-lazy val VERSION_AVRO4S            = "1.9.0"
 lazy val VERSION_JODA              = "2.10"
 lazy val VERSION_JODA_CONVERT      = "2.1"
 // for easy hexdigest generation
@@ -52,7 +51,6 @@ lazy val lib_deps = Seq(
   "com.typesafe.akka"      %% "akka-stream-kafka"       % VERSION_AKKA_STREAM_KAFKA,
   "com.typesafe.play"      %% "play"                    % VERSION_PLAY,
   "com.datastax.cassandra" %  "cassandra-driver-core"   % VERSION_CASSANDRA,
-  "com.sksamuel.avro4s"    %% "avro4s-core"             % VERSION_AVRO4S,
   "joda-time"              %  "joda-time"               % VERSION_JODA,
   "org.joda"               %  "joda-convert"            % VERSION_JODA_CONVERT,
   "org.scalamock"          %% "scalamock"               % VERSION_SCALA_MOCK % Test
