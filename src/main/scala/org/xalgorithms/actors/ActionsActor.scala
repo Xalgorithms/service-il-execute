@@ -32,34 +32,40 @@ import scala.util.{ Success, Failure }
 import org.xalgorithms.rules._
 import org.xalgorithms.rules.elements._
 import org.xalgorithms.storage.bson.Find
-import org.xalgorithms.storage.data.{ Mongo, MongoActions }
+import org.xalgorithms.storage.data.{ MongoActions }
 
 // local
 import org.xalgorithms.actors.Triggers._
-import org.xalgorithms.services.{ AkkaLogger }
+import org.xalgorithms.services.{ AkkaLogger, ConnectedMongo }
 
 class ActionsActor extends TopicActor("il.verify.rule_execution") {
-  private val _mongo = new Mongo(new AkkaLogger("mongo", log))
+  private val _mongo = ConnectedMongo(log)
 
   def execute_one(request_id: String, rule_id: String, opt_ctx_doc: Option[BsonDocument]): Unit = {
     log.info(s"executing rule (rule_id=${rule_id})")
     _mongo.find_one_bson(MongoActions.FindRuleById(rule_id)).onComplete {
-      case Success(rule_doc) => {
+      case Success(opt_rule_doc) => {
         log.debug("building syntax")
-        val steps = SyntaxFromBson(rule_doc)
-        log.debug("building ctx")
-        val ctx = ExecutionContext(new AkkaLogger("exec ctx", log), _mongo, opt_ctx_doc)
-        log.info("executing steps")
-        context.system.eventStream.publish(Events.ExecutionStarted(request_id))
-        steps.zipWithIndex.foreach { case (step, i) =>
-          log.info(s"starting step (i=${i})")
-          context.system.eventStream.publish(Events.StepStarted(request_id, i, ctx.serialize))
-          step.execute(ctx)
-          context.system.eventStream.publish(Events.StepFinished(request_id, i, ctx.serialize))
-          log.info(s"finished step (i=${i})")
+        opt_rule_doc match {
+          case Some(rule_doc) => {
+            val steps = SyntaxFromBson(rule_doc)
+            log.debug("building ctx")
+            val ctx = ExecutionContext(new AkkaLogger("exec ctx", log), _mongo, opt_ctx_doc)
+            log.info("executing steps")
+            context.system.eventStream.publish(Events.ExecutionStarted(request_id))
+            steps.zipWithIndex.foreach { case (step, i) =>
+              log.info(s"starting step (i=${i})")
+              context.system.eventStream.publish(Events.StepStarted(request_id, i, ctx.serialize))
+              step.execute(ctx)
+              context.system.eventStream.publish(Events.StepFinished(request_id, i, ctx.serialize))
+              log.info(s"finished step (i=${i})")
+            }
+            log.info("executed all steps")
+            context.system.eventStream.publish(Events.ExecutionFinished(request_id))
+          }
+
+          case None => log.error(s"failed to find the rule (id=${rule_id})")
         }
-        log.info("executed all steps")
-        context.system.eventStream.publish(Events.ExecutionFinished(request_id))
       }
 
       case Failure(th) => {
@@ -72,14 +78,20 @@ class ActionsActor extends TopicActor("il.verify.rule_execution") {
     case TriggerById(request_id) => {
       log.info(s"TriggerById(${request_id})")
       _mongo.find_one_bson(MongoActions.FindExecutionById(request_id)).onComplete {
-        case Success(doc) => {
-          log.info("found related document")
-          Find.maybe_find_text(doc, "rule_id") match {
-            case Some(rule_id) => {
-              log.info(s"executing rule (${rule_id})")
-              execute_one(request_id, rule_id, Find.maybe_find_document(doc, "context"))
+        case Success(opt_doc) => {
+          opt_doc match {
+            case Some(doc) => {
+              log.info("found related document")
+              Find.maybe_find_text(doc, "rule_id") match {
+                case Some(rule_id) => {
+                  log.info(s"executing rule (${rule_id})")
+                  execute_one(request_id, rule_id, Find.maybe_find_document(doc, "context"))
+                }
+                case None => log.error("failed to find rule_id")
+              }
             }
-            case None => log.error("failed to find rule_id")
+
+            case None => log.error(s"failed to find execution (request_id=${request_id})")
           }
         }
 

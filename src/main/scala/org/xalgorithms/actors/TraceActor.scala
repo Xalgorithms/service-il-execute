@@ -27,16 +27,16 @@ import akka.stream.{ ActorMaterializer }
 import scala.util.{ Success, Failure }
 
 // ours
-import org.xalgorithms.storage.data.{ Mongo, MongoActions }
+import org.xalgorithms.storage.data.{ MongoActions }
 
 // local
-import org.xalgorithms.services.{ AkkaLogger }
+import org.xalgorithms.services.{ AkkaLogger, ConnectedMongo }
 
 class TraceActor extends Actor with ActorLogging {
   implicit val materializer = ActorMaterializer()
   implicit val execution_context = context.dispatcher
 
-  private val _mongo = new Mongo(new AkkaLogger("mongo", log))
+  private val _mongo = ConnectedMongo(log)
 
   def receive = {
     case Events.ExecutionStarted(id) => {
@@ -57,7 +57,7 @@ class TraceActor extends Actor with ActorLogging {
 
     case Events.StepStarted(id, index, ctx) => {
       log.info(s"step started (${index})")
-      _mongo.update(MongoActions.AddContext(id, "start", index, ctx)).onComplete {
+      _mongo.update_one(MongoActions.AddContext(id, "start", index, ctx)).onComplete {
         case Success(o) => log.info(s"added context (id=${id})")
         case Failure(th) => log.error(s"failed to add context (id=${id}; th=${th.getMessage})")
       }
@@ -65,7 +65,7 @@ class TraceActor extends Actor with ActorLogging {
 
     case Events.StepFinished(id, index, ctx) => {
       log.info(s"step finished (${index})")
-      _mongo.update(MongoActions.AddContext(id, "finish", index, ctx)).onComplete {
+      _mongo.update_one(MongoActions.AddContext(id, "finish", index, ctx)).onComplete {
         case Success(o) => log.info(s"added context (id=${id})")
         case Failure(th) => log.error(s"failed to add context (id=${id}; th=${th.getMessage})")
       }

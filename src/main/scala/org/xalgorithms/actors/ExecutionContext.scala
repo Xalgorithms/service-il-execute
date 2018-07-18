@@ -44,8 +44,13 @@ object ExecutionContext {
         val q = mongo.find_one_bson(
           MongoActions.FindTableByReference(ptref.package_name, ptref.id, ptref.version))
         try {
-          val res = Await.result(q, 5.seconds)
-          Find.maybe_find_array(res, "table").getOrElse(new BsonArray())
+          Await.result(q, 5.seconds) match {
+            case Some(res) => Find.maybe_find_array(res, "table").getOrElse(new BsonArray())
+            case None => {
+              log.error("failed to find the table")
+              new BsonArray()
+            }
+          }
         } catch {
           case (th: java.util.concurrent.TimeoutException) => {
             log.error(s"connection timed out looking for table, yielding empty (${table_props})")
