@@ -33,7 +33,7 @@ lazy val VERSION_PLAY              = "2.6.0"
 
 // ours
 lazy val VERSION_STORAGE           = "0.0.5"
-lazy val VERSION_RULES_INTERPRETER = "0.0.4"
+lazy val VERSION_RULES_INTERPRETER = "0.0.5"
 
 lazy val meta = Seq(
   name := """service-il-execute""",
