@@ -27,5 +27,5 @@ import akka.event.LoggingAdapter
 import org.xalgorithms.storage.data.{ Mongo }
 
 object ConnectedMongo {
-  def apply(la: LoggingAdapter) = new Mongo(new AkkaLogger("mongo", la), sys.env.get("MONGO_URL"))
+  def apply(la: LoggingAdapter) = new Mongo(new AkkaLogger("mongo", la), sys.env.get("MONGO_URL"), sys.env.get("MONGO_DATABASE"))
 }

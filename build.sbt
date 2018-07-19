@@ -32,13 +32,13 @@ lazy val VERSION_JODA_CONVERT      = "2.1"
 lazy val VERSION_PLAY              = "2.6.0"
 
 // ours
-lazy val VERSION_STORAGE           = "0.0.5"
+lazy val VERSION_STORAGE           = "0.0.6"
 lazy val VERSION_RULES_INTERPRETER = "0.0.5"
 
 lazy val meta = Seq(
   name := """service-il-execute""",
   organization := "org.xalgorithms",
-  version := "0.0.4",
+  version := "0.0.5",
   scalaVersion := VERSION_SCALA,
 )
 
