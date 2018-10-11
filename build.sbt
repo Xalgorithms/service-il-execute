@@ -20,7 +20,10 @@
 // You should have received a copy of the GNU Affero General Public
 // License along with this program. If not, see
 // <http://www.gnu.org/licenses/>.
-lazy val VERSION_MONGO_SCALA       = "2.3.0"
+
+// NOTE: this library should be kept in sync w/ that in libs/storage. We tried to remove the
+// dep, but storage isn't quite abstracted well enough
+lazy val VERSION_MONGO_SCALA       = "2.4.2"
 lazy val VERSION_SCALA             = "2.12.4"
 lazy val VERSION_SCALA_TEST        = "3.1.2"
 lazy val VERSION_CASSANDRA         = "3.5.0"
@@ -32,13 +35,13 @@ lazy val VERSION_JODA_CONVERT      = "2.1"
 lazy val VERSION_PLAY              = "2.6.0"
 
 // ours
-lazy val VERSION_STORAGE           = "0.0.5"
+lazy val VERSION_STORAGE           = "0.0.7"
 lazy val VERSION_RULES_INTERPRETER = "0.0.5"
 
 lazy val meta = Seq(
   name := """service-il-execute""",
   organization := "org.xalgorithms",
-  version := "0.0.5",
+  version := "0.0.6",
   scalaVersion := VERSION_SCALA,
 )
 
