@@ -41,14 +41,19 @@ import org.xalgorithms.services.{ AkkaLogger, ConnectedMongo }
 class ActionsActor extends TopicActor("il.verify.rule_execution") {
   private val _mongo = ConnectedMongo(log)
 
+  def maybe_find_rule_content(rule_id: String): Future[Option[BsonDocument]] = {
+    _mongo.find_one_bson(MongoActions.FindRuleById(rule_id)).map { opt_rule_doc =>
+      opt_rule_doc.flatMap(Find.maybe_find_document(_, "content"))
+    }
+  }
+
   def execute_one(request_id: String, rule_id: String, opt_ctx_doc: Option[BsonDocument]): Unit = {
     log.info(s"executing rule (rule_id=${rule_id})")
-    _mongo.find_one_bson(MongoActions.FindRuleById(rule_id)).onComplete {
-      case Success(opt_rule_doc) => {
-        log.debug("building syntax")
-        opt_rule_doc match {
-          case Some(rule_doc) => {
-            val steps = SyntaxFromBson(rule_doc)
+    maybe_find_rule_content(rule_id).onComplete {
+      case Success(opt_content) => {
+        opt_content match {
+          case Some(content) => {
+            val steps = SyntaxFromBson(content)
             log.debug("building ctx")
             val ctx = ExecutionContext(new AkkaLogger("exec ctx", log), _mongo, opt_ctx_doc)
             log.info("executing steps")
@@ -63,13 +68,11 @@ class ActionsActor extends TopicActor("il.verify.rule_execution") {
             log.info("executed all steps")
             context.system.eventStream.publish(Events.ExecutionFinished(request_id))
           }
-
-          case None => log.error(s"failed to find the rule (id=${rule_id})")
+          case None => log.warning(s"content was empty (rule_id=${rule_id})")
         }
       }
-
       case Failure(th) => {
-        log.error("did not find the rule doc");
+        log.error("failed to find rule content")
       }
     }
   }
@@ -82,6 +85,7 @@ class ActionsActor extends TopicActor("il.verify.rule_execution") {
           opt_doc match {
             case Some(doc) => {
               log.info("found related document")
+              println(doc)
               Find.maybe_find_text(doc, "rule_id") match {
                 case Some(rule_id) => {
                   log.info(s"executing rule (${rule_id})")
