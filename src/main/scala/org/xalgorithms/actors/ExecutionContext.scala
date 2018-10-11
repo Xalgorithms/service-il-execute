@@ -38,45 +38,46 @@ object ExecutionContext {
     class LoadFromMongoBsonTableSource(mongo: Mongo) extends LoadBsonTableSource {
       private val _cache = scala.collection.mutable.Map[String, BsonArray]()
 
-      private def lookup_table(ptref: PackagedTableReference): BsonArray = {
-        val table_props = s"package_name=${ptref.package_name}; id=${ptref.id}; ver=${ptref.version}"
-        log.info(s"asked to find table (${table_props})")
-        val q = mongo.find_one_bson(
-          MongoActions.FindTableByReference(ptref.package_name, ptref.id, ptref.version))
+      private def lookup_table(rule_id: String): BsonArray = {
+        log.info(s"looking for table in mongo (rule_id=${rule_id})")
+        val q = mongo.find_one_bson(MongoActions.FindByKey("table_data", "rule_id", rule_id))
         try {
           Await.result(q, 5.seconds) match {
-            case Some(res) => Find.maybe_find_array(res, "table").getOrElse(new BsonArray())
+            case Some(res) => Find.maybe_find_array(res, "content").getOrElse(new BsonArray())
             case None => {
-              log.error("failed to find the table")
+              log.error("failed to find the table (rule_id=${rule_id})")
               new BsonArray()
             }
           }
         } catch {
           case (th: java.util.concurrent.TimeoutException) => {
-            log.error(s"connection timed out looking for table, yielding empty (${table_props})")
+            log.error(s"connection timed out looking for table, yielding empty (rule_id=${rule_id})")
             new BsonArray()
           }
         }
       }
 
-      private def maybe_find_in_cache(ptref: PackagedTableReference): BsonArray = {
-        val k = s"${ptref.package_name}/${ptref.id}/${ptref.version}"
-        _cache.get(k) match {
+      private def maybe_find_in_cache(rule_id: String): BsonArray = {
+        _cache.get(rule_id) match {
           case Some(a) => {
             log.info("reading table from cache")
             a
           }
           case None => {
-            log.info("serving table from cache")
-            val a = lookup_table(ptref)
-            _cache.put(k, a)
+            log.info("adding table to cache")
+            val a = lookup_table(rule_id)
+            _cache.put(rule_id, a)
             a
           }
         }
       }
 
       def read(ptref: PackagedTableReference): BsonArray = {
-        maybe_find_in_cache(ptref)
+        val table_props = s"package_name=${ptref.package_name}; id=${ptref.id}; ver=${ptref.version}"
+        // FIXME: this is also in storage...
+        val rule_id = play.api.libs.Codecs.sha1(s"T(${ptref.package_name}:${ptref.id}:${ptref.version})")
+        log.info(s"asked to find table (${table_props}; rule_id=${rule_id})")
+        maybe_find_in_cache(rule_id)
       }
     }
 
