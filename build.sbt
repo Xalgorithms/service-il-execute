@@ -41,7 +41,7 @@ lazy val VERSION_RULES_INTERPRETER = "0.0.5"
 lazy val meta = Seq(
   name := """service-il-execute""",
   organization := "org.xalgorithms",
-  version := "0.0.7",
+  version := "0.0.8",
   scalaVersion := VERSION_SCALA,
 )
 
