@@ -35,7 +35,7 @@ lazy val VERSION_JODA_CONVERT      = "2.1"
 lazy val VERSION_PLAY              = "2.6.0"
 
 // ours
-lazy val VERSION_STORAGE           = "0.0.7"
+lazy val VERSION_STORAGE           = "0.0.8"
 lazy val VERSION_RULES_INTERPRETER = "0.0.5"
 
 lazy val meta = Seq(
